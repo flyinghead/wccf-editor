@@ -1,4 +1,5 @@
 const TEAM_URL = 'http://localhost:17222/api/team';
+const IMAGE_URL = 'http://localhost:17222/image/';
 const PITCH_W = 390;
 const PITCH_H = 540;
 
@@ -57,6 +58,12 @@ function render()
         const el = document.createElement('div');
         el.className = 'player';
         el.dataset.pid = p.pid;
+        // set player image as background
+        const imgUrl = IMAGE_URL + p.pid + '.png';
+        el.style.backgroundImage = `url(${imgUrl})`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'left';
+        el.style.backgroundRepeat = 'no-repeat';
 
         // caption below the card
         const caption = document.createElement('div');

@@ -14,11 +14,11 @@ body{font-family: system-ui,Segoe UI,Roboto,Helvetica,Arial;display:flex;height:
     background-size:cover;
     background-position:center
 }
-.player{position:absolute;width:80px;height:120px;border-radius:6px;background:linear-gradient(#ffd27a,#ff9f2e);color:#111;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:grab;transform:translate(-50%,-50%);box-shadow:0 4px 8px rgba(0,0,0,0.35);padding:6px;text-align:center}
+.player{position:absolute;width:85px;height:120px;border-radius:6px;background:linear-gradient(#ffd27a,#ff9f2e);color:#111;display:flex;align-items:center;justify-content:center;font-weight:700;cursor:grab;transform:translate(-50%,-50%);box-shadow:0 4px 8px rgba(0,0,0,0.35);padding:6px;text-align:center;background-size:cover;background-position:center;background-repeat:no-repeat}
 .player.bench{background:linear-gradient(#999,#666);color:#fff;opacity:0.95}
 
-.player-caption{position:absolute;font-size:14px;font-weight:700;text-align:center;color:#111;transform:translateX(-50%);pointer-events:none;width:140px}
-.player-caption{color:#fff}
+.player-caption{position:absolute;font-size:14px;font-weight:700;text-align:center;color:#111;transform:translate(-50%,100%);pointer-events:none;width:140px}
+.player-caption{color:#faf602}
 .player-caption.bench{color:#666}
 aside#panel{width:320px;border-left:1px solid #ddd;padding:12px;background:#fafafa}
 label{display:block;margin:8px 0}

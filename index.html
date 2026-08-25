@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WCCF Team Editor</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="pitch-container">
+      <div id="pitch"></div>
+    </div>
+
+    <aside id="panel">
+      <h2>Team Editor</h2>
+      <div id="info">Loading team...</div>
+      <div id="controls" hidden>
+        <!-- <label>Selected PID: <span id="sel-pid"></span></label>
+        <label>X: <input id="input-x" type="number" min="0" max="360" /></label>
+        <label>Y: <input id="input-y" type="number" min="0" max="500" /></label> -->
+        <div class="buttons">
+          <!-- <button id="apply">Apply</button> -->
+          <button id="save">Save</button>
+          <!-- <button id="download">Download JSON</button> -->
+        </div>
+      </div>
+      <div><button id="load">Reload</button></div>
+      <div><button id="random">Create random team</button></div>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

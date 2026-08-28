@@ -1,14 +1,18 @@
-const TEAM_URL = 'http://localhost:17222/api/team';
-const IMAGE_URL = 'http://localhost:17222/image/';
-const PITCH_W = 390;
-const PITCH_H = 540;
+const SERVER = 'http://localhost:17222';
+const TEAM_URL = `${SERVER}/api/team`;
+const IMAGE_URL = `${SERVER}/image/`;
+const PITCH_XMIN = 30;
+const PITCH_XMAX = 475;
+const PITCH_W = PITCH_XMAX - PITCH_XMIN;
+const PITCH_YMIN = 20;
+const PITCH_YMAX = 580;
+const PITCH_H = PITCH_YMAX - PITCH_YMIN;
 
 let team = [];
 let selected = null;
 let lastSentAt = 0;
-const SEND_THROTTLE_MS = 50;
-let curDelta = 1;
-let timeoutId = null;
+const SEND_THROTTLE_MS = 25;
+let version = null;
 
 const pitch = document.getElementById('pitch');
 const info = document.getElementById('info');
@@ -16,8 +20,7 @@ const controls = document.getElementById('controls');
 //const selPid = document.getElementById('sel-pid');
 //const inputX = document.getElementById('input-x');
 //const inputY = document.getElementById('input-y');
-//const applyBtn = document.getElementById('apply');
-const saveBtn = document.getElementById('save');
+//const saveBtn = document.getElementById('save');
 //const downloadBtn = document.getElementById('download');
 const loadBtn = document.getElementById('load');
 const randomBtn = document.getElementById('random');
@@ -27,8 +30,8 @@ function dataToPx(x,y)
     const rect = pitch.getBoundingClientRect();
     const scaleX = rect.width / PITCH_W;
     const scaleY = rect.height / PITCH_H;
-    const px = (PITCH_W - x) * scaleX;
-    const py = (PITCH_H - y) * scaleY;
+    const px = (PITCH_W - x + PITCH_XMIN) * scaleX;
+    const py = (PITCH_H - y + PITCH_YMIN) * scaleY;
     return {left: px, top: py};
 }
 
@@ -37,8 +40,8 @@ function pxToData(px,py)
     const rect = pitch.getBoundingClientRect();
     const scaleX = rect.width / PITCH_W;
     const scaleY = rect.height / PITCH_H;
-    const x = PITCH_W - (px / scaleX);
-    const y = PITCH_H - (py / scaleY);
+    const x = PITCH_W - (px / scaleX) + PITCH_XMIN;
+    const y = PITCH_H - (py / scaleY) + PITCH_YMIN;
     return {x: Math.round(x), y: Math.round(y)};
 }
 
@@ -78,8 +81,10 @@ function render()
         caption.style.left = pos.left + 'px';
         caption.style.top = (pos.top + 44) + 'px';
 
-        if (p.x < 64)
+        if (p.x < 130) {
             el.classList.add('bench');
+            caption.classList.add('bench');
+        }
         pitch.appendChild(el);
         pitch.appendChild(caption);
 
@@ -130,8 +135,10 @@ function startDrag(e)
         const py = clientY - rect.top;
         const d = pxToData(px,py);
         // clamp
-        d.x = Math.max(0, Math.min(PITCH_W, d.x));
-        d.y = Math.max(0, Math.min(PITCH_H, d.y));
+        d.x = Math.max(0, Math.min(PITCH_XMAX, d.x));
+        d.y = Math.max(0, Math.min(PITCH_YMAX, d.y));
+        if (selected.x === d.x && selected.y === d.y)
+            return;
         selected.x = d.x;
         selected.y = d.y;
         //inputX.value = selected.x;
@@ -154,37 +161,13 @@ function startDrag(e)
             sendPlayerUpdate(selected);
     };
 
-    const dblclick = () => {
-        if (selected.delta !== undefined && selected.delta !== 0)
-            return;
-        info.textContent = 'Player ' + selected.pid + ' rubbed. Delta ' + curDelta;
-        selected.delta = curDelta;
-        sendPlayerUpdate(selected);
-        timeoutId = setTimeout(() => {
-            info.textContent = '';
-            selected.delta = 0;
-            curDelta++;
-            sendPlayerUpdate(selected);
-            cancelTimeout(timeoutId);
-            timeoutId = null;
-        }, 2000);
-    };
-
     window.addEventListener('mousemove', move);
     window.addEventListener('mouseup', up);
     window.addEventListener('touchmove', move, { passive:false });
     window.addEventListener('touchend', up);
-    window.addEventListener('dblclick', dblclick);
 }
 
 /*
-applyBtn.addEventListener('click', () => {
-  if(!selected) return;
-  selected.x = Number(inputX.value);
-  selected.y = Number(inputY.value);
-  render();
-});
-
 downloadBtn.addEventListener('click', () => {
   const blob = new Blob([JSON.stringify(team,null,2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -194,26 +177,95 @@ downloadBtn.addEventListener('click', () => {
 });
 */
 
-saveBtn.addEventListener('click', save);
+//saveBtn.addEventListener('click', save);
 loadBtn.addEventListener('click', load);
 
 randomBtn.addEventListener('click', async () => {
     if (!confirm('This will create a random team and overwrite the current one. Continue?'))
         return;
     console.log('Creating random team...');
+    if (version === null) {
+        try {
+            const res = await fetch(SERVER + '/version');
+            if (!res.ok)
+                throw new Error('Failed to get game version');
+            version = await res.text();
+        } catch(err) {
+            alert(err.message);
+            return;
+        }
+    }
+    let ranges, cardCount;
+    switch (version) {
+        case '116':
+            cardCount = 462;
+            ranges = [
+                { start: 0x18, end: 0x83, special: 0 },
+                { start: 0xc9, end: 0x1fe, special: 0 },
+                { start: 0x226, end: 0x246, special: 0 },
+                { start: 0x246, end: 0x254, special: 1 },
+            ];
+            break;
+        case '212e':
+        case '234j':
+            cardCount = 340;
+            ranges = [
+                { start: 0x258, end: 0x378, special: 0 },
+                { start: 0x378, end: 0x3ac, special: 1 },
+            ];
+            break;
+        case '310j':
+        case '322e':
+        case '331e':
+        case '331j':
+        case '341j':
+            cardCount = 352;
+            ranges = [
+                { start: 0x3ac, end: 0x3cc, special: 0 },
+                { start: 0x3cc, end: 0x3fc, special: 1 },
+                { start: 0x3fc, end: 0x400, special: 1 },
+                { start: 0x44c, end: 0x52c, special: 0 },
+                { start: 0x52c, end: 0x54c, special: 1 },
+                { start: 0x54c, end: 0x558, special: 1 },
+            ];
+            break;
+        case '400j':
+        case '420e':
+            cardCount = 389;
+            ranges = [
+                { start: 0x558, end: 0x559, special: 1 },
+                { start: 0x579, end: 0x6c9, special: 0 },
+                { start: 0x6c9, end: 0x6f3, special: 1 },
+                { start: 0x6f3, end: 0x6fd, special: 1 },
+            ];
+            break;
+        default:
+            return;
+    }
+    const blacklistedCards = [ 0x4c0, 0x4c4, 0x4c6, 0x4ca, 0x4cc, 0x4ce, 0x4cf, 0x4d0, 0x642, 0x64b ];
     await deleteAllPlayers();
     team = [];
     for (let i = 0; i < 16; i++)
     {
         while (true) {
             const p = {
-                pid: Math.floor(Math.random() * 388) + 1401,
+                pid: Math.floor(Math.random() * cardCount),
                 x: (i % 4) * 100 + 40,
                 y: Math.floor(i / 4) * 120 + 100
             };
-            if (p.pid >= 1737)
-                p.pid |= 0x4000;
-            if (team.some(p2 => p2.pid === p.pid))
+            let count = 0;
+            for (const r of ranges)
+            {
+                if (p.pid - count < r.end - r.start)
+                {
+                    p.pid = r.start + p.pid - count;
+                    if (r.special)
+                        p.pid |= 0x4000;
+                    break;
+                }
+                count += r.end - r.start;
+            }
+            if (team.some(p2 => p2.pid === p.pid) || blacklistedCards.includes(p.pid))
                 continue;
             team.push(p);
             break;
@@ -232,7 +284,6 @@ async function save()
         });
         if (!res.ok)
             throw new Error(await res.text());
-        //alert('Saved successfully');
     } catch(err) {
         alert('Save failed: '+err.message);
     }

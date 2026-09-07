@@ -19,7 +19,7 @@ body{font-family: system-ui,Segoe UI,Roboto,Helvetica,Arial;display:flex;height:
 
 .player-caption{position:absolute;font-size:14px;font-weight:700;text-align:center;color:#111;transform:translate(-50%,100%);pointer-events:none;width:140px}
 .player-caption{color:#faf602}
-.player-caption.bench{color:#666}
+.player-caption.bench{color:#ffffff}
 aside#panel{width:320px;border-left:1px solid #ddd;padding:12px;background:#fafafa}
 label{display:block;margin:8px 0}
 input[type=number]{width:140px}
